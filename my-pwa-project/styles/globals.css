@@ -108,10 +108,5 @@ html {
 }
 
 #helmet .logo-color-switch {
-	fill: #2d2a6d;
-}
-@media (prefers-color-scheme: dark) {
-	#helmet .logo-color-switch {
-		fill: #ffffff;
-	}
+	fill: #ffffff;
 }
