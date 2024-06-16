@@ -12,6 +12,9 @@ interface VechainAccountContextType {
     sendTransaction: (tx: { to?: string; value?: string | number | bigint; data?: string | { abi: Abi[] | readonly unknown[]; functionName: string; args: any[] } }) => Promise<string>;
     exportWallet: () => Promise<void>;
     thor: ThorClient;
+    nodeUrl: string
+    delegatorUrl: string
+    accountFactory: string
 }
 
 const randomTransactionUser = (() => {
@@ -33,25 +36,50 @@ export const VechainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
     const [address, setAddress] = useState<string | undefined>()
     const thor = ThorClient.fromUrl(nodeUrl)
 
+    // load the address of the account abstraction wallet identified by the embedded wallets address
     useEffect(() => {
         if (!embeddedWallet) { return }
-        void (async () => {
-            const accountAddress = await thor.contracts.executeCall(accountFactory, 'function getAddress(address owner,uint256 salt) public view returns (address)' as unknown as FunctionFragment, [embeddedWallet.address, BigInt(embeddedWallet.address)])
-            setAddress(String(accountAddress[0]))
-        })()
+
+        thor.contracts.executeCall(
+            accountFactory,
+            'function getAddress(address owner, uint256 salt) public view returns (address)' as unknown as FunctionFragment,
+            [embeddedWallet.address, BigInt(embeddedWallet.address)]
+        )
+            .then(accountAddress => setAddress(String(accountAddress[0])))
+            .catch(() => {/* ignore */ })
     }, [embeddedWallet, thor, accountFactory])
 
     useEffect(() => {
-        if (!embeddedWallet) {
-            setAddress(undefined)
-        }
+        if (!embeddedWallet) { setAddress(undefined) }
     }, [embeddedWallet])
 
-    const sendTransaction = async ({ data: funcData, ...message }: { to?: string, value?: number | string | bigint, data?: string | { abi: Abi[] | readonly unknown[], functionName: string, args: any[] } }): Promise<string> => {
+    const sendTransaction = async ({
+        data: funcData,
+        title,
+        description,
+        buttonText,
+        ...message
+    }:
+        {
+            to?: string,
+            value?: number | string | bigint,
+            data?: string | {
+                abi: Abi[] | readonly unknown[],
+                functionName: string,
+                args: any[]
+            }
+            validAfter?: number
+            validBefore?: number,
+            title?: string,
+            description?: string,
+            buttonText?: string
+        }): Promise<string> => {
+
         if (!address || !embeddedWallet) {
             throw new Error('Address or embedded wallet is missing');
         }
 
+        // build the object to be signed, containing all information & instructions
         const data = {
             domain: {
                 name: 'Wallet',
@@ -78,19 +106,24 @@ export const VechainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
             },
         }
 
-        const description = typeof (funcData) === 'object' && 'functionName' in funcData ? funcData.functionName : ' '
+        // request signature from user with some personalization
         const signature = await signTypedData(data, {
-            title: 'Sign Transaction',
-            description,
-            buttonText: 'Sign'
+            title: title ?? 'Sign Transaction',
+            description: description ?? (typeof (funcData) === 'object' && 'functionName' in funcData ? funcData.functionName : ' '),
+            buttonText: buttonText ?? 'Sign'
         })
 
         const clauses = []
+
+        // if the account address has no code yet, its not been deployed/created yet
+        // so we'll ask the factory to create a wallet
         const { hasCode: isDeployed } = await thor.accounts.getAccount(address)
         if (!isDeployed) {
             clauses.push(clauseBuilder.functionInteraction(
                 accountFactory,
                 'function createAccount(address owner,uint256 salt)' as unknown as FunctionFragment,
+
+                // as identifier/salt we'll use the embedded wallets address, who will also be the owner
                 [
                     embeddedWallet.address,
                     BigInt(embeddedWallet.address)
@@ -98,6 +131,7 @@ export const VechainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
             ))
         }
 
+        // the execution instructions for the account
         clauses.push(clauseBuilder.functionInteraction(
             address,
             'function executeWithAuthorization(address to, uint256 value, bytes calldata data, uint256 validAfter, uint256 validBefore, bytes calldata signature)' as unknown as FunctionFragment,
@@ -110,6 +144,8 @@ export const VechainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
                 signature as `0x${string}`
             ]
         ))
+
+        // build the transaction for sending
         const gasResult = await thor.gas.estimateGas(clauses)
 
         // build a transaction
@@ -119,22 +155,18 @@ export const VechainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
             { isDelegated: true, }
         )
 
-        // sign the transaction
+        // sign the transaction and let the fee delegator pay the gas fees
         const wallet = new ProviderInternalBaseWallet(
             [{ privateKey: Buffer.from(randomTransactionUser.privateKey.slice(2), 'hex'), address: randomTransactionUser.address }],
-            {
-                delegator: {
-                    delegatorUrl
-                },
-            }
+            { delegator: { delegatorUrl } }
         )
 
-        // Create the provider (used in this case to sign the transaction with getSigner() method)
         const providerWithDelegationEnabled = new VeChainProvider(thor, wallet, true)
         const signer = await providerWithDelegationEnabled.getSigner(randomTransactionUser.address)
         const txInput = signerUtils.transactionBodyToTransactionRequestInput(txBody, randomTransactionUser.address)
         const rawDelegateSigned = await signer!.signTransaction(txInput)
 
+        // publish transaction directly on the node api
         const { id } = await fetch(`${nodeUrl}/transactions`, {
             method: 'POST',
             headers: {
@@ -149,7 +181,16 @@ export const VechainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
     }
 
     return (
-        <VechainAccountContext.Provider value={{ address, embeddedWallet, sendTransaction, exportWallet, thor }}>
+        <VechainAccountContext.Provider value={{
+            address,
+            accountFactory,
+            nodeUrl,
+            delegatorUrl,
+            embeddedWallet,
+            sendTransaction,
+            exportWallet,
+            thor
+        }}>
             {children}
         </VechainAccountContext.Provider>
     )

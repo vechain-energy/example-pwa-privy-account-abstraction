@@ -1,13 +1,12 @@
 import AuthenticatedPage from '@/components/authenticated-page'
 import Section from '@/components/section'
-import { links } from '@/lib/links'
 import { useState, useEffect, useCallback } from 'react'
 import { isAddress } from 'viem'
-import { useVechainAccount } from '../lib/hooks/useVechainAccount'
+import { useVechainAccount } from '@/lib/hooks/useVechainAccount'
 import type { FunctionFragment } from '@vechain/sdk-core';
 
 const EmbeddedWallet = () => {
-	const { address, embeddedWallet, sendTransaction, exportWallet, thor } = useVechainAccount()
+	const { address, sendTransaction, exportWallet, thor } = useVechainAccount()
 
 	// Transaction state
 	const [recipientAddress, setRecipientAddress] = useState<string | undefined>()
@@ -30,8 +29,8 @@ const EmbeddedWallet = () => {
 			setTxHash(_txHash)
 		} catch (e) {
 			console.error('Transfer failed with error ', e)
+			setTxIsLoading(false)
 		}
-		setTxIsLoading(false)
 	}
 
 
@@ -94,7 +93,7 @@ const EmbeddedWallet = () => {
 				</p>
 				<button
 					type='button'
-					className='mt-2 w-full rounded-md bg-orange-600 py-2 text-sm font-semibold text-white shadow-sm disabled:bg-orange-400'
+					className='mt-2 w-full rounded-md bg-orange-600 py-2 text-sm font-semibold text-white shadow-sm disabled:opacity-25'
 					disabled={
 						txIsLoading
 					}
@@ -140,7 +139,7 @@ const EmbeddedWallet = () => {
 				/>
 				<button
 					type='button'
-					className='mt-2 w-full rounded-md bg-orange-600 py-2 text-sm font-semibold text-white shadow-sm disabled:bg-orange-400'
+					className='mt-2 w-full rounded-md bg-orange-600 py-2 text-sm font-semibold text-white shadow-sm disabled:opacity-25'
 					disabled={
 						!recipientAddress || !isAddress(recipientAddress) || txIsLoading
 					}
@@ -178,23 +177,6 @@ const EmbeddedWallet = () => {
 				>
 					Export key
 				</button>
-			</Section>
-			<Section>
-				<p className='text-md mt-8 font-bold uppercase text-gray-300'>
-					Learn more
-				</p>
-				<p className='mt-2 text-sm text-gray-400'>
-					Read our{' '}
-					<a
-						className='underline'
-						href={links.docs.embeddedWallets}
-						target='_blank'
-						rel='noreferrer noopener'
-					>
-						docs
-					</a>{' '}
-					to learn more about using embedded wallets in your app.
-				</p>
 			</Section>
 		</AuthenticatedPage>
 	)

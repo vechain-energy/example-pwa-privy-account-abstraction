@@ -14,7 +14,7 @@ const BottomNav = () => {
 			<nav className='fixed bottom-0 w-full border-t bg-zinc-900 pb-safe border-orange-800'>
 				<div className='mx-auto flex h-16 max-w-md items-center justify-around px-6'>
 					{links.map(({ href, label, icon }) => (
-						<Link key={label} href={href} className={`flex h-full w-full flex-col items-center justify-center space-y-1 ${
+						<Link key={label} href={href} className={`flex h-full w-full flex-col items-center justify-center space-y-1 hover:text-orange-600 ${
 							router.pathname === href ? 'text-orange-600' : 'text-gray-400'
 						}`}>
 							{icon}
