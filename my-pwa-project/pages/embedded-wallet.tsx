@@ -67,7 +67,9 @@ const EmbeddedWallet = () => {
 	const updateCounter = useCallback(async (txHash?: string) => {
 		if (!thor) { return }
 		if (txHash) {
+			setTxIsLoading(true)
 			await thor.transactions.waitForTransaction(txHash)
+			setTxIsLoading(false)
 		}
 		const counter = await thor.contracts.executeCall("0x8384738C995D49C5b692560ae688fc8b51af1059", 'function counter() public view returns (uint256)' as unknown as FunctionFragment, [])
 		setCounter(BigInt(counter[0]))
