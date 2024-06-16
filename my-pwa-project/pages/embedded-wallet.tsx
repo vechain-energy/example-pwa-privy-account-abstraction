@@ -3,7 +3,7 @@ import Section from '@/components/section'
 import { links } from '@/lib/links'
 import { useState, useEffect, useCallback } from 'react'
 import { isAddress } from 'viem'
-import { useVechainAccount } from '../lib/hooks/useAccount'
+import { useVechainAccount } from '../lib/hooks/useVechainAccount'
 import type { FunctionFragment } from '@vechain/sdk-core';
 
 const EmbeddedWallet = () => {
@@ -81,26 +81,18 @@ const EmbeddedWallet = () => {
 	return (
 		<AuthenticatedPage>
 			<Section>
-				<p className='mt-2 text-sm text-gray-600'>
-					Your On-Chain Wallet address: {address}
-				</p>
-				<p className='mt-2 text-sm text-gray-600'>
-					Your Privy internal (owner) address: {embeddedWallet?.address}
-				</p>
-			</Section>
-			<Section>
-				<p className='text-md mt-8 font-bold uppercase text-gray-700'>
+				<p className='text-md mt-8 font-bold uppercase text-gray-300'>
 					Test Function
 				</p>
-				<p className='mt-2 text-sm text-gray-600'>
+				<p className='mt-2 text-sm text-gray-400'>
 					Test a Function call by incrementing an on-chain-counter.
 				</p>
-				<p className='mt-2 text-sm text-gray-600'>
+				<p className='mt-2 text-sm text-gray-400'>
 					Current Counter: {String(counter)}
 				</p>
 				<button
 					type='button'
-					className='mt-2 w-full rounded-md bg-indigo-600 py-2 text-sm font-semibold text-white shadow-sm disabled:bg-indigo-400'
+					className='mt-2 w-full rounded-md bg-orange-600 py-2 text-sm font-semibold text-white shadow-sm disabled:bg-orange-400'
 					disabled={
 						txIsLoading
 					}
@@ -109,7 +101,7 @@ const EmbeddedWallet = () => {
 					Increment
 				</button>
 				{txHash && (
-					<p className='mt-2 text-sm italic text-gray-600'>
+					<p className='mt-2 text-sm italic text-gray-400'>
 						See your transaction on{' '}
 						<a
 							className='underline'
@@ -124,14 +116,14 @@ const EmbeddedWallet = () => {
 				)}
 			</Section>
 			<Section>
-				<p className='text-md mt-8 font-bold uppercase text-gray-700'>
+				<p className='text-md mt-8 font-bold uppercase text-gray-300'>
 					Transfer VET
 				</p>
-				<p className='mt-2 text-sm text-gray-600'>
+				<p className='mt-2 text-sm text-gray-400'>
 					Transfer VET from your  wallet. Enter a valid recipient
 					address to enable the button.
 				</p>
-				<p className='mt-2 text-sm text-gray-600'>
+				<p className='mt-2 text-sm text-gray-400'>
 					Fund your wallet first:
 				</p>
 				<input
@@ -146,7 +138,7 @@ const EmbeddedWallet = () => {
 				/>
 				<button
 					type='button'
-					className='mt-2 w-full rounded-md bg-indigo-600 py-2 text-sm font-semibold text-white shadow-sm disabled:bg-indigo-400'
+					className='mt-2 w-full rounded-md bg-orange-600 py-2 text-sm font-semibold text-white shadow-sm disabled:bg-orange-400'
 					disabled={
 						!recipientAddress || !isAddress(recipientAddress) || txIsLoading
 					}
@@ -155,7 +147,7 @@ const EmbeddedWallet = () => {
 					Transfer 1 VET
 				</button>
 				{txHash && (
-					<p className='mt-2 text-sm italic text-gray-600'>
+					<p className='mt-2 text-sm italic text-gray-400'>
 						See your transaction on{' '}
 						<a
 							className='underline'
@@ -170,26 +162,26 @@ const EmbeddedWallet = () => {
 				)}
 			</Section>
 			<Section>
-				<p className='text-md mt-8 font-bold uppercase text-gray-700'>
+				<p className='text-md mt-8 font-bold uppercase text-gray-300'>
 					Export your private key
 				</p>
-				<p className='mt-2 text-sm text-gray-600'>
+				<p className='mt-2 text-sm text-gray-400'>
 					Export your embedded wallet&apos;s private key to use in another
 					wallet client.
 				</p>
 				<button
 					type='button'
-					className='mt-2 w-full rounded-md bg-indigo-600 py-2 text-sm font-semibold text-white shadow-sm'
+					className='mt-2 w-full rounded-md bg-orange-600 py-2 text-sm font-semibold text-white shadow-sm'
 					onClick={exportWallet}
 				>
 					Export key
 				</button>
 			</Section>
 			<Section>
-				<p className='text-md mt-8 font-bold uppercase text-gray-700'>
+				<p className='text-md mt-8 font-bold uppercase text-gray-300'>
 					Learn more
 				</p>
-				<p className='mt-2 text-sm text-gray-600'>
+				<p className='mt-2 text-sm text-gray-400'>
 					Read our{' '}
 					<a
 						className='underline'

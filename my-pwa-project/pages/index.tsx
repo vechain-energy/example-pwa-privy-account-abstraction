@@ -60,25 +60,25 @@ const Index = () => {
 	return (
 		<>
 			<Head>
-				<title>Privy PWA Template</title>
+				<title>Privy PWA Template · vechain.energy</title>
 			</Head>
 			<main>
 				<div className='flex h-screen w-screen flex-col items-center justify-center'>
 					<Blobby />
-					<h2 className='my-4 text-xl font-semibold text-gray-800'>
-						Privy PWA Template
+					<h2 className='my-4 text-xl font-semibold text-gray-300'>
+						Privy PWA Template · vechain.energy
 					</h2>
 					<div className='mt-2 w-1/2'>
 						{!isInstalled && isAndroid ? (
 							<button
-								className='my-4 w-full rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm disabled:bg-indigo-400'
+								className='my-4 w-full rounded-md bg-orange-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm disabled:bg-orange-400'
 								onClick={promptToInstall}
 							>
 								Install App
 							</button>
 						) : (
 							<button
-								className='my-4 w-full rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm disabled:bg-indigo-400'
+								className='my-4 w-full rounded-md bg-orange-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm disabled:bg-orange-400'
 								onClick={login}
 								// Always check that Privy is `ready` and the user is not `authenticated` before calling `login`
 								disabled={!ready || authenticated}

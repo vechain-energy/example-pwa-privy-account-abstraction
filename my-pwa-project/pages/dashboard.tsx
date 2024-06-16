@@ -2,17 +2,19 @@ import AuthenticatedPage from '@/components/authenticated-page'
 import Section from '@/components/section'
 import { usePrivy } from '@privy-io/react-auth'
 import { links } from '@/lib/links'
+import { useVechainAccount } from '@/lib/hooks/useVechainAccount'
 
 const Dashboard = () => {
 	// You can also import other linking methods, like linkWallet, linkEmail, linkDiscord, etc.
-	const { user, linkPhone, linkGoogle, linkApple } = usePrivy()
+	const { user, linkGithub, linkGoogle } = usePrivy()
+	const { address } = useVechainAccount()
 	return (
 		<AuthenticatedPage>
 			<Section>
-				<p className='text-md mt-2 font-bold uppercase text-gray-700'>
+				<p className='text-md mt-2 font-bold uppercase text-gray-300'>
 					Your User Object
 				</p>
-				<p className='mt-2 text-sm text-gray-600'>
+				<p className='mt-2 text-sm text-gray-400'>
 					Inspect your linked accounts, or{' '}
 					<a
 						href={links.docs.userObject}
@@ -32,10 +34,24 @@ const Dashboard = () => {
 				/>
 			</Section>
 			<Section>
-				<p className='text-md mt-8 font-bold uppercase text-gray-700'>
+				<p className='text-md mt-2 font-bold uppercase text-gray-300'>
+					Your Account Abstraction Wallet on Vechain
+				</p>
+				<p className='mt-2 text-sm text-gray-400'>
+					You will be interacting with dApps using this address.
+				</p>
+				<textarea
+					value={JSON.stringify(address, null, 2)}
+					className='mt-4 h-12 w-full rounded-md bg-slate-700 p-4 font-mono text-xs text-slate-50 disabled:bg-slate-700'
+					rows={1}
+					readOnly
+				/>
+			</Section>
+			<Section>
+				<p className='text-md mt-8 font-bold uppercase text-gray-300'>
 					Account Linking
 				</p>
-				<p className='mt-2 text-sm text-gray-600'>
+				<p className='mt-2 text-sm text-gray-400'>
 					Link additional login methods, or{' '}
 					<a
 						href={links.docs.linking}
@@ -49,25 +65,18 @@ const Dashboard = () => {
 				</p>
 				<div className='flex flex-row gap-2'>
 					<button
-						className='my-4 w-1/3 rounded-md bg-indigo-600 px-2 py-2.5 text-xs font-semibold text-white shadow-sm disabled:bg-indigo-400'
+						className='my-4 w-1/3 rounded-md bg-orange-600 px-2 py-2.5 text-xs font-semibold text-white shadow-sm disabled:bg-orange-400'
 						onClick={linkGoogle}
 						disabled={!!user?.google}
 					>
 						Google
 					</button>
 					<button
-						className='my-4 w-1/3 rounded-md bg-indigo-600 px-2 py-2.5 text-xs font-semibold text-white shadow-sm disabled:bg-indigo-400'
-						onClick={linkApple}
-						disabled={!!user?.apple}
+						className='my-4 w-1/3 rounded-md bg-orange-600 px-2 py-2.5 text-xs font-semibold text-white shadow-sm disabled:bg-orange-400'
+						onClick={linkGithub}
+						disabled={!!user?.github}
 					>
-						Apple
-					</button>
-					<button
-						className='my-4 w-1/3 rounded-md bg-indigo-600 px-2 py-2.5 text-xs font-semibold text-white shadow-sm  disabled:bg-indigo-400'
-						onClick={linkPhone}
-						disabled={!!user?.phone}
-					>
-						Phone
+						GitHub
 					</button>
 				</div>
 			</Section>

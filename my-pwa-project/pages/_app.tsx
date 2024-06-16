@@ -2,7 +2,7 @@ import type { AppProps } from 'next/app'
 import Meta from '@/components/meta'
 import '@/styles/globals.css'
 import { PrivyProvider } from '@privy-io/react-auth'
-import { VechainAccountProvider } from '../lib/hooks/useAccount'
+import { VechainAccountProvider } from '../lib/hooks/useVechainAccount'
 
 const App = ({ Component, pageProps }: AppProps) => {
 	return (
@@ -17,9 +17,9 @@ const App = ({ Component, pageProps }: AppProps) => {
 		>
 			<Meta />
 			<VechainAccountProvider
-				nodeUrl={process.env.NEXT_PUBLIC_NODE_URL ?? ''}
-				delegatorUrl="https://sponsor-testnet.vechain.energy/by/90"
-				accountFactory={process.env.NEXT_PUBLIC_AA_FACTORY ?? ''}
+				nodeUrl={process.env.NEXT_PUBLIC_NODE_URL as string}
+				delegatorUrl={process.env.NEXT_PUBLIC_DELEGATOR_URL as string}
+				accountFactory={process.env.NEXT_PUBLIC_AA_FACTORY as string}
 			>
 				<Component {...pageProps} />
 			</VechainAccountProvider>
