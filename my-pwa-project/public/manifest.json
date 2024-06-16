@@ -1,0 +1,23 @@
+{
+	"name": "Privy PWA Demo",
+	"short_name": "VET Privy PWA",
+	"description": "Demo of using Privy in a progressive web app (PWA) using Account Abstraction on Vechain",
+	"icons": [
+		{
+			"src": "/images/image-192.png",
+			"type": "image/png",
+			"sizes": "192x192"
+		},
+		{
+			"src": "/images/image-512.png",
+			"type": "image/png",
+			"sizes": "512x512"
+		}
+	],
+	"start_url": "/?source=pwa",
+	"background_color": "#1d2020",
+	"orientation": "portrait",
+	"display": "standalone",
+	"scope": "/pages/",
+	"theme_color": "#1d2020"
+}
