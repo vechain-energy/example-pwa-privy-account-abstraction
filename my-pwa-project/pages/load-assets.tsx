@@ -9,7 +9,7 @@ const LoadAssets = () => {
 					Claim Testnet Faucet
 				</p>
 				<p className='mt-2 text-sm text-gray-300'>
-					You can visit https://faucet.vecha.in and claim free VET or VTHO for your developer wallet.
+					You can visit <a href="https://faucet.vecha.in" target='_blank' rel="noreferrer noopener">https://faucet.vecha.in</a> and claim free VET or VTHO for your developer wallet.
 				</p>
 				<p className='mt-2 text-sm text-gray-300'>
 					Your Account Abstraction Wallet is a smart contract that can be instructed to interact on the users behalf. On the very first action, the contract is deployed.

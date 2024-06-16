@@ -13,7 +13,21 @@ const Dashboard = () => {
 		<AuthenticatedPage>
 			<Section>
 				<p className='text-md mt-2 font-bold uppercase text-gray-300'>
-					Your User Object
+					Your Vechain Account Abstraction
+				</p>
+				<p className='mt-2 text-sm text-gray-400'>
+					You will be interacting with dApps using this address, while fees are paid by the delegatorUrl.
+				</p>
+				<textarea
+					value={JSON.stringify(vechainData, null, 2)}
+					className='mt-4 h-64 w-full rounded-md bg-slate-700 p-4 font-mono text-xs text-slate-50 disabled:opacity-25'
+					rows={JSON.stringify(vechainData, null, 2).split('\n').length}
+					readOnly
+				/>
+			</Section>
+			<Section>
+				<p className='text-md mt-2 font-bold uppercase text-gray-300'>
+					Your Privy User Object
 				</p>
 				<p className='mt-2 text-sm text-gray-400'>
 					Inspect your linked accounts, or{' '}
@@ -31,20 +45,6 @@ const Dashboard = () => {
 					value={JSON.stringify(user, null, 2)}
 					className='mt-4 h-64 w-full rounded-md bg-slate-700 p-4 font-mono text-xs text-slate-50 disabled:opacity-25'
 					rows={JSON.stringify(user, null, 2).split('\n').length}
-					readOnly
-				/>
-			</Section>
-			<Section>
-				<p className='text-md mt-2 font-bold uppercase text-gray-300'>
-					Your Account Abstraction Wallet
-				</p>
-				<p className='mt-2 text-sm text-gray-400'>
-					You will be interacting with dApps using this address, while fees are paid by the delegatorUrl.
-				</p>
-				<textarea
-					value={JSON.stringify(vechainData, null, 2)}
-					className='mt-4 h-64 w-full rounded-md bg-slate-700 p-4 font-mono text-xs text-slate-50 disabled:opacity-25'
-					rows={JSON.stringify(vechainData, null, 2).split('\n').length}
 					readOnly
 				/>
 			</Section>
