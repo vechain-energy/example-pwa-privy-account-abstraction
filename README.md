@@ -400,10 +400,12 @@ const _txHash = await vechain.sendTransaction({
 })
 ```
 
-# Process Review
+# Conclusion
 
 In this article, we've addressed the lack of VeChain support within Privy and viem by creating an Account Abstraction Factory that serves as the interaction source.
 
 By using Fee Delegation, the gas fees are covered for the user, eliminating the need to ask the user to fund it with VTHO first.
 
 An example application for further exploration of Account Abstractions and a Privy PWA is available on GitHub at [vechain-energy/example-pwa-privy-account-abstraction](https://github.com/vechain-energy/example-pwa-privy-account-abstraction/blob/main/my-pwa-project/pages/_app.tsx) and at [pwa-privy.examples.vechain.energy](https://pwa-privy.examples.vechain.energy).
+
+You can use the information to either build on top of the example project and hook or derive your own process.
