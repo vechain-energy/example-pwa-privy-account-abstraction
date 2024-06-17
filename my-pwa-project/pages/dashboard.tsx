@@ -2,18 +2,18 @@ import AuthenticatedPage from '@/components/authenticated-page'
 import Section from '@/components/section'
 import { usePrivy } from '@privy-io/react-auth'
 import { links } from '@/lib/links'
-import { useVechainAccount } from '@/lib/hooks/useVechainAccount'
+import { useVeChainAccount } from '@/lib/useVeChainAccount'
 
 const Dashboard = () => {
 	// You can also import other linking methods, like linkWallet, linkEmail, linkDiscord, etc.
 	const { user, linkGithub, linkGoogle } = usePrivy()
-	const { thor: _thor, sendTransaction: _sendTransaction, exportWallet: _exportWallet, ...vechainData } = useVechainAccount()
+	const { thor: _thor, sendTransaction: _sendTransaction, exportWallet: _exportWallet, ...vechainData } = useVeChainAccount()
 
 	return (
 		<AuthenticatedPage>
 			<Section>
 				<p className='text-md mt-2 font-bold uppercase text-gray-300'>
-					Your Vechain Account Abstraction
+					Your VeChain Account Abstraction
 				</p>
 				<p className='mt-2 text-sm text-gray-400'>
 					You will be interacting with dApps using this address, while fees are paid by the delegatorUrl.

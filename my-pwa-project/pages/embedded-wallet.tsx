@@ -1,12 +1,12 @@
 import AuthenticatedPage from '@/components/authenticated-page'
 import Section from '@/components/section'
 import { useState, useEffect, useCallback } from 'react'
-import { isAddress } from 'viem'
-import { useVechainAccount } from '@/lib/hooks/useVechainAccount'
+import { isAddress, parseEther } from 'viem'
+import { useVeChainAccount } from '@/lib/useVeChainAccount'
 import type { FunctionFragment } from '@vechain/sdk-core';
 
 const EmbeddedWallet = () => {
-	const { address, sendTransaction, exportWallet, thor } = useVechainAccount()
+	const vechain = useVeChainAccount()
 
 	// Transaction state
 	const [recipientAddress, setRecipientAddress] = useState<string | undefined>()
@@ -15,16 +15,12 @@ const EmbeddedWallet = () => {
 
 
 	const onTransfer = async () => {
-		if (!address) return
+		if (!vechain.address) return
 		try {
-
-			// Send transaction using the viem wallet client. Alternatively, you
-			// may use Privy's `sendTransaction` method. This is just an example
-			// of the many ways to send a transaction from the wallet.
 			setTxIsLoading(true)
-			const _txHash = await sendTransaction({
+			const _txHash = await vechain.sendTransaction({
 				to: recipientAddress as `0x${string}`,
-				value: BigInt(1 * 1e18).toString()
+				value: parseEther('0.004'),
 			})
 			setTxHash(_txHash)
 		} catch (e) {
@@ -35,14 +31,10 @@ const EmbeddedWallet = () => {
 
 
 	const onFunction = async () => {
-		if (!address) return
+		if (!vechain.address) return
 		try {
-
-			// Send transaction using the viem wallet client. Alternatively, you
-			// may use Privy's `sendTransaction` method. This is just an example
-			// of the many ways to send a transaction from the wallet.
 			setTxIsLoading(true)
-			const _txHash = await sendTransaction({
+			const _txHash = await vechain.sendTransaction({
 				to: '0x8384738C995D49C5b692560ae688fc8b51af1059',
 				value: 0,
 				data: {
@@ -64,15 +56,15 @@ const EmbeddedWallet = () => {
 	}
 
 	const updateCounter = useCallback(async (txHash?: string) => {
-		if (!thor) { return }
+		if (!vechain.thor) { return }
 		if (txHash) {
 			setTxIsLoading(true)
-			await thor.transactions.waitForTransaction(txHash)
+			await vechain.thor.transactions.waitForTransaction(txHash)
 			setTxIsLoading(false)
 		}
-		const counter = await thor.contracts.executeCall("0x8384738C995D49C5b692560ae688fc8b51af1059", 'function counter() public view returns (uint256)' as unknown as FunctionFragment, [])
+		const counter = await vechain.thor.contracts.executeCall("0x8384738C995D49C5b692560ae688fc8b51af1059", 'function counter() public view returns (uint256)' as unknown as FunctionFragment, [])
 		setCounter(BigInt(counter[0]))
-	}, [thor])
+	}, [vechain.thor])
 
 	const [counter, setCounter] = useState(BigInt(0))
 	useEffect(() => {
@@ -81,6 +73,17 @@ const EmbeddedWallet = () => {
 
 	return (
 		<AuthenticatedPage>
+			<Section>
+				<p className='text-md mt-2 font-bold uppercase text-gray-300'>
+					Your VeChain Address
+				</p>
+				<textarea
+					value={vechain.address}
+					className='mt-4 h-12 w-full rounded-md bg-slate-700 p-4 font-mono text-xs text-slate-50 disabled:opacity-25'
+					rows={1}
+					readOnly
+				/>
+			</Section>
 			<Section>
 				<p className='text-md mt-8 font-bold uppercase text-gray-300'>
 					Test Function
@@ -145,7 +148,7 @@ const EmbeddedWallet = () => {
 					}
 					onClick={onTransfer}
 				>
-					Transfer 1 VET
+					Transfer 0.004 VET
 				</button>
 				{txHash && (
 					<p className='mt-2 text-sm italic text-gray-400'>
@@ -173,7 +176,7 @@ const EmbeddedWallet = () => {
 				<button
 					type='button'
 					className='mt-2 w-full rounded-md bg-orange-600 py-2 text-sm font-semibold text-white shadow-sm'
-					onClick={exportWallet}
+					onClick={vechain.exportWallet}
 				>
 					Export key
 				</button>

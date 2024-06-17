@@ -6,7 +6,7 @@ import type { Abi } from 'viem/_types'
 import { clauseBuilder, FunctionFragment } from '@vechain/sdk-core'
 import { ThorClient, VeChainProvider, ProviderInternalBaseWallet, signerUtils } from '@vechain/sdk-network'
 
-interface VechainAccountContextType {
+interface VeChainAccountContextType {
     address: string | undefined;
     embeddedWallet: ConnectedWallet | undefined;
     sendTransaction: (tx: { to?: string; value?: string | number | bigint; data?: string | { abi: Abi[] | readonly unknown[]; functionName: string; args: any[] } }) => Promise<string>;
@@ -27,9 +27,9 @@ const randomTransactionUser = (() => {
     }
 })()
 
-const VechainAccountContext = createContext<VechainAccountContextType | null>(null)
+const VechainAccountContext = createContext<VeChainAccountContextType | null>(null)
 
-export const VechainAccountProvider = ({ children, nodeUrl, delegatorUrl, accountFactory }: { children: React.ReactNode, nodeUrl: string, delegatorUrl: string, accountFactory: string }) => {
+export const VeChainAccountProvider = ({ children, nodeUrl, delegatorUrl, accountFactory }: { children: React.ReactNode, nodeUrl: string, delegatorUrl: string, accountFactory: string }) => {
     const { signTypedData, exportWallet } = usePrivy()
     const { wallets } = useWallets()
     const embeddedWallet = wallets.find(wallet => wallet.walletClientType === 'privy')
@@ -54,6 +54,7 @@ export const VechainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
     }, [embeddedWallet])
 
     const sendTransaction = async ({
+        value = 0,
         data: funcData,
         title,
         description,
@@ -100,7 +101,7 @@ export const VechainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
             message: {
                 validAfter: 0,
                 validBefore: Math.floor(Date.now() / 1000) + 3600, // Valid for an hour
-                value: 0,
+                value: String(value),
                 data: typeof (funcData) === 'object' && 'abi' in funcData ? encodeFunctionData(funcData) : funcData ?? '0x',
                 ...message,
             },
@@ -196,10 +197,10 @@ export const VechainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
     )
 }
 
-export const useVechainAccount = () => {
+export const useVeChainAccount = () => {
     const context = useContext(VechainAccountContext)
     if (!context) {
-        throw new Error('useVechainAccount must be used within a VechainAccountProvider')
+        throw new Error('useVeChainAccount must be used within a VeChainAccountProvider')
     }
     return context
 }
