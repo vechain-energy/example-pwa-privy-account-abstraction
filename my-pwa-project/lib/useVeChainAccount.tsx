@@ -53,6 +53,7 @@ export const VeChainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
             .catch(() => {/* ignore */ })
     }, [embeddedWallet, thor, accountFactory])
 
+    // reset address when embedded wallet vanishes
     useEffect(() => {
         if (!embeddedWallet) { setAddress(undefined) }
     }, [embeddedWallet])
@@ -67,12 +68,12 @@ export const VeChainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
     }, [thor])
 
     const sendTransaction = async ({
+        to,
         value = 0,
-        data: funcData,
-        title,
+        data: funcData = '0x',
+        title = 'Sign Transaction',
         description,
-        buttonText,
-        ...message
+        buttonText = 'Sign'
     }:
         {
             to?: string,
@@ -94,14 +95,16 @@ export const VeChainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
         }
 
         // build the object to be signed, containing all information & instructions
-        console.log(chainId)
         const data = {
+            // the context
             domain: {
                 name: 'Wallet',
                 version: '1',
                 chainId: chainId as unknown as number, // work around the viem limitation that chainId must be a number but its too big to be handled as such
                 verifyingContract: address
             },
+
+            // type definitions, can be multples, can be put into a configurational scope
             types: {
                 ExecuteWithAuthorization: [
                     { name: "to", type: "address" },
@@ -112,26 +115,47 @@ export const VeChainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
                 ],
             },
             primaryType: "ExecuteWithAuthorization",
+
+            /**
+             * the message to sign, it is basically the instructions for an execute command
+             * to, value and data are transaction relevant
+             * validAfter & validBefore are good to limit authorization and will be checked with block.timestamp
+             */
             message: {
+                // valid by default right now, could also limit for future use
                 validAfter: 0,
-                validBefore: Math.floor(Date.now() / 1000) + 3600, // Valid for an hour
+
+                // Valid for an hour
+                validBefore: Math.floor(Date.now() / 1000) + 3600,
+
+                // the transaction instructions
+                to,
                 value: String(value),
-                data: typeof (funcData) === 'object' && 'abi' in funcData ? encodeFunctionData(funcData) : funcData ?? '0x',
-                ...message,
+
+                // decide if the data needs to be encoded first or can be passed directly
+                data: typeof (funcData) === 'object' && 'abi' in funcData ? encodeFunctionData(funcData) : funcData,
             },
         }
 
-        // request signature from user with some personalization
+        /**
+         * request a signature using privy
+         * the information is show to the user in a modal
+         */
         const signature = await signTypedData(data, {
-            title: title ?? 'Sign Transaction',
+            title,
             description: description ?? (typeof (funcData) === 'object' && 'functionName' in funcData ? funcData.functionName : ' '),
-            buttonText: buttonText ?? 'Sign'
+            buttonText
         })
 
+        /**
+         * start building the clauses for the transaction
+         */
         const clauses = []
 
-        // if the account address has no code yet, its not been deployed/created yet
-        // so we'll ask the factory to create a wallet
+        /**
+         * if the account address has no code yet, its not been deployed/created yet
+         * so we'll instructt the factory to create a wallet
+         */
         const { hasCode: isDeployed } = await thor.accounts.getAccount(address)
         if (!isDeployed) {
             clauses.push(clauseBuilder.functionInteraction(
@@ -146,7 +170,11 @@ export const VeChainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
             ))
         }
 
-        // the execution instructions for the account
+        /**
+         * build the transaction call to the SimpleAccount
+         * by passing in all dynamic data that was signed
+         * which includes the to be executed transaction instructions
+         */
         clauses.push(clauseBuilder.functionInteraction(
             address,
             'function executeWithAuthorization(address to, uint256 value, bytes calldata data, uint256 validAfter, uint256 validBefore, bytes calldata signature)' as unknown as FunctionFragment,
@@ -160,28 +188,32 @@ export const VeChainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
             ]
         ))
 
-        // build the transaction for sending
+        // estimate the gas fees for the transaction
         const gasResult = await thor.gas.estimateGas(clauses)
 
-        // build a transaction
+        // .. and build the transaction in VeChain format, with delegation enabled
         const txBody = await thor.transactions.buildTransactionBody(
             clauses,
             gasResult.totalGas,
             { isDelegated: true, }
         )
 
-        // sign the transaction and let the fee delegator pay the gas fees
+        /**
+         * sign the transaction
+         * and request the fee delegator to pay the gas fees in the proccess
+         */
         const wallet = new ProviderInternalBaseWallet(
             [{ privateKey: Buffer.from(randomTransactionUser.privateKey.slice(2), 'hex'), address: randomTransactionUser.address }],
             { delegator: { delegatorUrl } }
         )
-
         const providerWithDelegationEnabled = new VeChainProvider(thor, wallet, true)
         const signer = await providerWithDelegationEnabled.getSigner(randomTransactionUser.address)
         const txInput = signerUtils.transactionBodyToTransactionRequestInput(txBody, randomTransactionUser.address)
         const rawDelegateSigned = await signer!.signTransaction(txInput)
 
-        // publish transaction directly on the node api
+        /**
+         * publish the hexlified signed transaction directly on the node api
+         */
         const { id } = await fetch(`${nodeUrl}/transactions`, {
             method: 'POST',
             headers: {
