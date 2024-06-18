@@ -236,7 +236,7 @@ Install the VeChain SDK to simplify interaction with the VeChain network:
 npm install  --save @vechain/sdk-core@1.0.0-beta.16 @vechain/sdk-network@1.0.0-beta.16
 ```
 
-## `useVechainAccount.tsx`
+## `useVeChainAccount.tsx`
 
 A prepared hook will provide connectivity to the Account Abtractions deployment.
 
