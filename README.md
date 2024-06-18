@@ -404,6 +404,12 @@ const _txHash = await vechain.sendTransaction({
 })
 ```
 
+# Hide Transaction Signing
+
+Signing messages or transactions can be complex and a hurdle for regular users. To reduce friction, you can disable the signing dialog in the Privy Dashboard under `Embedded Wallets > Add confirmation modals`.
+
+Disabling this option allows the application to instantly interact with the blockchain, improving the user experience. Pending transactions can be managed with loading animations.
+
 # Conclusion
 
 In this article, we've addressed the lack of VeChain support within Privy and viem by creating an Account Abstraction Factory that serves as the interaction source.
