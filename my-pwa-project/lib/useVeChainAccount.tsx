@@ -34,6 +34,7 @@ export const VeChainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
     const { wallets } = useWallets()
     const embeddedWallet = wallets.find(wallet => wallet.walletClientType === 'privy')
     const [address, setAddress] = useState<string | undefined>()
+    const [chainId, setChainId] = useState('')
     const thor = ThorClient.fromUrl(nodeUrl)
 
     /**
@@ -52,10 +53,22 @@ export const VeChainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
             .catch(() => {/* ignore */ })
     }, [embeddedWallet, thor, accountFactory])
 
+
+    /**
+     * identify the current chain from its genesis block
+     */
+    useEffect(() => {
+        thor.blocks.getGenesisBlock()
+            .then(genesis => genesis?.id && setChainId(BigInt(genesis.id).toString()))
+            .catch(() => {/* ignore */ })
+    }, [thor])
+
+
     // reset address when embedded wallet vanishes
     useEffect(() => {
         if (!embeddedWallet) { setAddress(undefined) }
     }, [embeddedWallet])
+
 
     const sendTransaction = async ({
         to,
@@ -84,15 +97,6 @@ export const VeChainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
             throw new Error('Address or embedded wallet is missing');
         }
 
-
-        /**
-         * identify the current chain from its genesis block
-         */
-        const genesis = await thor.blocks.getGenesisBlock()
-        if (!genesis) { throw new Error('Unable to identify chainId') }
-        const chainId = BigInt(genesis.id)
-
-
         // build the object to be signed, containing all information & instructions
         const data = {
             /**
@@ -102,7 +106,7 @@ export const VeChainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
             domain: {
                 name: "Wallet",
                 version: "1",
-                chainId: String(chainId) as unknown as number,  // work around the viem limitation that chainId must be a number but its too big to be handled as such
+                chainId: chainId as unknown as number,  // work around the viem limitation that chainId must be a number but its too big to be handled as such
                 verifyingContract: address
             },
 
