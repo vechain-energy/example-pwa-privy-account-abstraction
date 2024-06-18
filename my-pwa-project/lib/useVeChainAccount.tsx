@@ -102,7 +102,7 @@ export const VeChainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
             domain: {
                 name: "Wallet",
                 version: "1",
-                chainId: chainId as unknown as number,  // work around the viem limitation that chainId must be a number but its too big to be handled as such
+                chainId: String(chainId) as unknown as number,  // work around the viem limitation that chainId must be a number but its too big to be handled as such
                 verifyingContract: address
             },
 
