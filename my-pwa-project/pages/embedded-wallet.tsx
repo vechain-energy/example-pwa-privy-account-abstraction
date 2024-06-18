@@ -1,9 +1,9 @@
 import AuthenticatedPage from '@/components/authenticated-page'
 import Section from '@/components/section'
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { isAddress, parseEther } from 'viem'
 import { useVeChainAccount } from '@/lib/useVeChainAccount'
-import type { FunctionFragment } from '@vechain/sdk-core';
+import Counter from '@/components/Counter'
 
 const EmbeddedWallet = () => {
 	const vechain = useVeChainAccount()
@@ -29,48 +29,6 @@ const EmbeddedWallet = () => {
 		}
 	}
 
-
-	const onFunction = async () => {
-		if (!vechain.address) return
-		try {
-			setTxIsLoading(true)
-			const _txHash = await vechain.sendTransaction({
-				to: '0x8384738C995D49C5b692560ae688fc8b51af1059',
-				value: 0,
-				data: {
-					abi: [{
-						"inputs": [],
-						"name": "increment",
-						"outputs": [],
-						"type": "function"
-					}],
-					functionName: "increment",
-					args: []
-				},
-			})
-			setTxHash(_txHash)
-		} catch (e) {
-			console.error('Function call failed with error ', e)
-		}
-		setTxIsLoading(false)
-	}
-
-	const updateCounter = useCallback(async (txHash?: string) => {
-		if (!vechain.thor) { return }
-		if (txHash) {
-			setTxIsLoading(true)
-			await vechain.thor.transactions.waitForTransaction(txHash)
-			setTxIsLoading(false)
-		}
-		const counter = await vechain.thor.contracts.executeCall("0x8384738C995D49C5b692560ae688fc8b51af1059", 'function counter() public view returns (uint256)' as unknown as FunctionFragment, [])
-		setCounter(BigInt(counter[0]))
-	}, [vechain.thor])
-
-	const [counter, setCounter] = useState(BigInt(0))
-	useEffect(() => {
-		void updateCounter(txHash)
-	}, [updateCounter, txHash])
-
 	return (
 		<AuthenticatedPage>
 			<Section>
@@ -84,41 +42,7 @@ const EmbeddedWallet = () => {
 					readOnly
 				/>
 			</Section>
-			<Section>
-				<p className='text-md mt-8 font-bold uppercase text-gray-300'>
-					Test Function
-				</p>
-				<p className='mt-2 text-sm text-gray-400'>
-					Test a Function call by incrementing an on-chain-counter.
-				</p>
-				<p className='mt-2 text-sm text-gray-400'>
-					Current Counter: {String(counter)}
-				</p>
-				<button
-					type='button'
-					className='mt-2 w-full rounded-md bg-orange-600 py-2 text-sm font-semibold text-white shadow-sm disabled:opacity-25'
-					disabled={
-						txIsLoading
-					}
-					onClick={onFunction}
-				>
-					Increment
-				</button>
-				{txHash && (
-					<p className='mt-2 text-sm italic text-gray-400'>
-						See your transaction on{' '}
-						<a
-							className='underline'
-							href={`https://explore-testnet.vechain.org/transactions/${txHash}`}
-							target='_blank'
-							rel='noreferrer noopener'
-						>
-							explorer
-						</a>
-						.
-					</p>
-				)}
-			</Section>
+			<Counter />
 			<Section>
 				<p className='text-md mt-8 font-bold uppercase text-gray-300'>
 					Transfer VET
