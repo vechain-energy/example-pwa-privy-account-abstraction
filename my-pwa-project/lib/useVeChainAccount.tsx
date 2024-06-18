@@ -35,8 +35,12 @@ export const VeChainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
     const embeddedWallet = wallets.find(wallet => wallet.walletClientType === 'privy')
     const [address, setAddress] = useState<string | undefined>()
     const thor = ThorClient.fromUrl(nodeUrl)
+    const [chainId, setChainId] = useState('')
 
-    // load the address of the account abstraction wallet identified by the embedded wallets address
+    /**
+     * load the address of the account abstraction wallet identified by the embedded wallets address
+     * it is the origin for on-chain-interaction with other parties
+     * */
     useEffect(() => {
         if (!embeddedWallet) { return }
 
@@ -52,6 +56,15 @@ export const VeChainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
     useEffect(() => {
         if (!embeddedWallet) { setAddress(undefined) }
     }, [embeddedWallet])
+
+    /**
+     * identify the current chain from its genesis block
+     */
+    useEffect(() => {
+        thor.blocks.getGenesisBlock()
+            .then(block => block?.id && setChainId(BigInt(block.id).toString()))
+            .catch(() => {/* ignore */ })
+    }, [thor])
 
     const sendTransaction = async ({
         value = 0,
@@ -81,11 +94,12 @@ export const VeChainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
         }
 
         // build the object to be signed, containing all information & instructions
+        console.log(chainId)
         const data = {
             domain: {
                 name: 'Wallet',
                 version: '1',
-                chainId: "1176455790972829965191905223412607679856028701100105089447013101863" as unknown as number,
+                chainId: chainId as unknown as number, // work around the viem limitation that chainId must be a number but its too big to be handled as such
                 verifyingContract: address
             },
             types: {
