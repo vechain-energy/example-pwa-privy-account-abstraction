@@ -140,7 +140,7 @@ Successfully generated 120 typings!
 Compiled 44 Solidity files successfully (evm target: paris).
 deploying "EntryPoint" (tx: 0x3142517bc96bef748c8630af244cf62cb71dd57407470011bf60e7581fd07fba)...: deployed at 0x4C1E3c36d8C0538C88720e0725D7488dc3547fc7 with 4042403 gas
 ==entrypoint addr= 0x4C1E3c36d8C0538C88720e0725D7488dc3547fc7
-deploying "SimpleAccountFactory" (tx: 0xa9836861610368eb2c7c2822a69cd7c91abda44eef572b5c719058fb75868cbe)...: deployed at 0x30B29698D652f8c82fd3bd10914FDcC108f07865 with 2503344 gas
+deploying "SimpleAccountFactory" (tx: 0xd00c5f3275ae891a1d0259ed5a338d40d6a8689b3ed54abce22180746e5f530a)...: deployed at 0x41Ea0cDa1471d70961bdc81bB9203a09cbf9B65e with 2503344 gas
 ```
 
 The deployment addresses and ABIs are archived in the `deployments/vechain_testnet` folder.
@@ -155,15 +155,30 @@ The `SimpleAccount` restricts access to its owner or the endpoint contract.
 Because Privy does not support the VeChain network, the interaction will be based on signed messages.
 A new function `executeWithAuthorization` verifies a signature for an execution to be from the owner.
 
-Add this function to the `SimpleAccount.sol` before deployment:
+You can add yourself a signature verification to `SimpleAccount.sol` with these changes:
+
+```solidity
+import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+```
+
+Call the EIP721 with the constructor by adjusting its definition:
+
+```solidity
+    constructor(IEntryPoint anEntryPoint) EIP712("Wallet", "1") {
+```
+
+And add a new function that verifies signatures and does the same as `execute`:
 
 ```solidity
 /**
-    * execute a transaction authorized via signatures signed by the owner
-
+    * execute a transaction (called directly from owner, or by entryPoint) authorized via signatures
+    
     * @param to destination address to call
     * @param value the value to pass in this call
     * @param data the calldata to pass in this call
+    * @param validAfter unix timestamp after which the signature will be accepted
+    * @param validBefore unix timestamp until the signature will be accepted
+    * @param signature the signed type4 signature
     */
 function executeWithAuthorization(
     address to,
@@ -176,18 +191,9 @@ function executeWithAuthorization(
     require(block.timestamp > validAfter, "Authorization not yet valid");
     require(block.timestamp < validBefore, "Authorization expired");
 
-    bytes32 DOMAIN_SEPARATOR = keccak256(
-        abi.encode(
-            keccak256(
-                "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-            ),
-            keccak256(bytes("Wallet")),
-            keccak256(bytes("1")),
-            block.chainid,
-            address(this)
-        )
-    );
-
+    /**
+        * verify that the signature did sign the function call
+        */
     bytes32 structHash = keccak256(
         abi.encode(
             keccak256(
@@ -200,14 +206,12 @@ function executeWithAuthorization(
             validBefore
         )
     );
-
-    bytes32 digest = keccak256(
-        abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash)
-    );
+    bytes32 digest = _hashTypedDataV4(structHash);
 
     address recoveredAddress = ECDSA.recover(digest, signature);
     require(recoveredAddress == owner, "Invalid signer");
 
+    // execute the instruction
     _call(to, value, data);
 }
 ```

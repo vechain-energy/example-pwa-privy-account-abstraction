@@ -7,8 +7,9 @@ pragma solidity ^0.8.23;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import "../core/BaseAccount.sol";
 import "../core/Helpers.sol";
 import "./callback/TokenCallbackHandler.sol";
@@ -21,9 +22,10 @@ import "./callback/TokenCallbackHandler.sol";
  */
 contract SimpleAccount is
     BaseAccount,
+    Initializable,
     TokenCallbackHandler,
-    UUPSUpgradeable,
-    Initializable
+    EIP712Upgradeable,
+    UUPSUpgradeable
 {
     address public owner;
 
@@ -81,6 +83,9 @@ contract SimpleAccount is
      * @param to destination address to call
      * @param value the value to pass in this call
      * @param data the calldata to pass in this call
+     * @param validAfter unix timestamp after which the signature will be accepted
+     * @param validBefore unix timestamp until the signature will be accepted
+     * @param signature the signed type4 signature
      */
     function executeWithAuthorization(
         address to,
@@ -93,18 +98,9 @@ contract SimpleAccount is
         require(block.timestamp > validAfter, "Authorization not yet valid");
         require(block.timestamp < validBefore, "Authorization expired");
 
-        bytes32 DOMAIN_SEPARATOR = keccak256(
-            abi.encode(
-                keccak256(
-                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-                ),
-                keccak256(bytes("Wallet")),
-                keccak256(bytes("1")),
-                block.chainid,
-                address(this)
-            )
-        );
-
+        /**
+         * verify that the signature did sign the function call
+         */
         bytes32 structHash = keccak256(
             abi.encode(
                 keccak256(
@@ -117,14 +113,12 @@ contract SimpleAccount is
                 validBefore
             )
         );
-
-        bytes32 digest = keccak256(
-            abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash)
-        );
+        bytes32 digest = _hashTypedDataV4(structHash);
 
         address recoveredAddress = ECDSA.recover(digest, signature);
         require(recoveredAddress == owner, "Invalid signer");
 
+        // execute the instruction
         _call(to, value, data);
     }
 
@@ -165,6 +159,8 @@ contract SimpleAccount is
      */
     function initialize(address anOwner) public virtual initializer {
         _initialize(anOwner);
+        __EIP712_init("Wallet", "1");
+        __UUPSUpgradeable_init();
     }
 
     function _initialize(address anOwner) internal virtual {

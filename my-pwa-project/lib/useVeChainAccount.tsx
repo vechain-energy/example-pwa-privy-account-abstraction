@@ -35,7 +35,6 @@ export const VeChainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
     const embeddedWallet = wallets.find(wallet => wallet.walletClientType === 'privy')
     const [address, setAddress] = useState<string | undefined>()
     const thor = ThorClient.fromUrl(nodeUrl)
-    const [chainId, setChainId] = useState('')
 
     /**
      * load the address of the account abstraction wallet identified by the embedded wallets address
@@ -57,15 +56,6 @@ export const VeChainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
     useEffect(() => {
         if (!embeddedWallet) { setAddress(undefined) }
     }, [embeddedWallet])
-
-    /**
-     * identify the current chain from its genesis block
-     */
-    useEffect(() => {
-        thor.blocks.getGenesisBlock()
-            .then(block => block?.id && setChainId(BigInt(block.id).toString()))
-            .catch(() => {/* ignore */ })
-    }, [thor])
 
     const sendTransaction = async ({
         to,
@@ -94,18 +84,33 @@ export const VeChainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
             throw new Error('Address or embedded wallet is missing');
         }
 
+
+        /**
+         * identify the current chain from its genesis block
+         */
+        const genesis = await thor.blocks.getGenesisBlock()
+        if (!genesis) { throw new Error('Unable to identify chainId') }
+        const chainId = BigInt(genesis.id)
+
+
         // build the object to be signed, containing all information & instructions
         const data = {
-            // the context
+            /**
+             * the domain is configured in the contracts by this call:
+             *  __EIP712_init("Wallet", "1") 
+             */
             domain: {
-                name: 'Wallet',
-                version: '1',
-                chainId: chainId as unknown as number, // work around the viem limitation that chainId must be a number but its too big to be handled as such
+                name: "Wallet",
+                version: "1",
+                chainId: chainId as unknown as number,  // work around the viem limitation that chainId must be a number but its too big to be handled as such
                 verifyingContract: address
             },
 
-            // type definitions, can be multples, can be put into a configurational scope
+            // type definitions, can be multiples, can be put into a configurational scope
             types: {
+                /**
+                 * the ExecuteWithAuthorization is basically the function definition of 
+                 */
                 ExecuteWithAuthorization: [
                     { name: "to", type: "address" },
                     { name: "value", type: "uint256" },
@@ -125,7 +130,7 @@ export const VeChainAccountProvider = ({ children, nodeUrl, delegatorUrl, accoun
                 // valid by default right now, could also limit for future use
                 validAfter: 0,
 
-                // Valid for an hour
+                // valid for an hour
                 validBefore: Math.floor(Date.now() / 1000) + 3600,
 
                 // the transaction instructions
